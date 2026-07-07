@@ -1,0 +1,40 @@
+@model WebApplication1.Models.EfModels.Category
+
+@{
+    ViewData["Title"] = "刪除商品分類";
+}
+
+<div class="container mt-4">
+    <h2>刪除商品分類</h2>
+    <p class="text-danger">確定要刪除這筆資料嗎？</p>
+    <hr />
+
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.CategoryName)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.CategoryName)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.DisplayOrder)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.DisplayOrder)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.IsDeleted)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.IsDeleted)
+        </dd>
+    </dl>
+
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        <div class="mt-4">
+            <input type="submit" value="確認刪除" class="btn btn-danger px-4" />
+            <a asp-action="Index" class="btn btn-outline-secondary ms-2">返回列表</a>
+        </div>
+    </form>
+</div>

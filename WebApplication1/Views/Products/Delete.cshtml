@@ -1,0 +1,52 @@
+@model WebApplication1.Models.EfModels.Product
+
+@{
+    ViewData["Title"] = "刪除商品";
+}
+
+<div class="container mt-4">
+    <h2>刪除商品</h2>
+    <p class="text-danger">確定要刪除這筆資料嗎？</p>
+    <hr />
+
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.ProductName)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.ProductName)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.OrigPrice)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.OrigPrice)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.UnitPrice)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.UnitPrice)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Category)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Category.CategoryName)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Supplier)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Supplier.CompanyName)
+        </dd>
+    </dl>
+
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        <div class="mt-4">
+            <input type="submit" value="確認刪除" class="btn btn-danger px-4" />
+            <a asp-action="Index" class="btn btn-outline-secondary ms-2">返回列表</a>
+        </div>
+    </form>
+</div>

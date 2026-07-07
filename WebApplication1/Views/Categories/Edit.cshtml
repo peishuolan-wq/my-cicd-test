@@ -1,0 +1,47 @@
+@model WebApplication1.Models.EfModels.Category
+
+@{
+    ViewData["Title"] = "編輯商品分類";
+}
+
+<div class="container mt-4">
+    <h2>編輯商品分類</h2>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-6">
+            <form asp-action="Edit">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <input type="hidden" asp-for="Id" />
+
+                <div class="mb-3">
+                    <label asp-for="CategoryName" class="form-label"></label>
+                    <input asp-for="CategoryName" class="form-control" />
+                    <span asp-validation-for="CategoryName" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="DisplayOrder" class="form-label"></label>
+                    <input asp-for="DisplayOrder" class="form-control" />
+                    <span asp-validation-for="DisplayOrder" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input class="form-check-input" asp-for="IsDeleted" />
+                    <label class="form-check-label" asp-for="IsDeleted"></label>
+                </div>
+
+                <div class="mt-4">
+                    <input type="submit" value="確認儲存" class="btn btn-primary px-4" />
+                    <a asp-action="Index" class="btn btn-outline-secondary ms-2">返回列表</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

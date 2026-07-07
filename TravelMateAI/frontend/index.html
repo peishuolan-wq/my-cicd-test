@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TravelMate AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+      background: linear-gradient(135deg, #dde8f8 0%, #e8e4f8 40%, #d4e4f5 70%, #cfe0f7 100%);
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── App window chrome ── */
+    .app-window {
+      width: 960px;
+      height: 620px;
+      margin: 24px auto;
+      border-radius: 16px;
+      box-shadow: 0 32px 80px rgba(80,100,160,0.22), 0 4px 16px rgba(80,100,160,0.10);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: rgba(255,255,255,0.55);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.75);
+    }
+
+    /* title bar */
+    .title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 10px 14px 8px;
+      background: rgba(255,255,255,0.6);
+      border-bottom: 1px solid rgba(200,210,240,0.3);
+      flex-shrink: 0;
+    }
+    .title-bar .win-btn { width:13px;height:13px;border-radius:50%;border:none;cursor:pointer; }
+    .win-btn.close    { background:#ff5f57; }
+    .win-btn.minimise { background:#febc2e; }
+    .win-btn.full     { background:#28c840; }
+
+    /* ── Main layout ── */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 192px 1fr 268px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Left sidebar ── */
+    .sidebar {
+      background: rgba(255,255,255,0.45);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(255,255,255,0.6);
+      display: flex;
+      flex-direction: column;
+      padding: 18px 0 12px;
+    }
+    .sidebar-logo {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 18px 20px;
+      font-weight: 700; font-size: 15px; color: #2d4a8a;
+    }
+    .sidebar-logo .logo-icon {
+      width:32px;height:32px;
+      background:linear-gradient(135deg,#4a7cf7,#7b5ea7);
+      border-radius:8px;
+      display:flex;align-items:center;justify-content:center;font-size:16px;
+    }
+    .nav-item {
+      display:flex;align-items:center;gap:10px;
+      padding:9px 18px;font-size:13.5px;font-weight:500;color:#5a6a8a;
+      cursor:pointer;border-radius:10px;margin:1px 10px;transition:all .18s;
+    }
+    .nav-item:hover { background:rgba(74,124,247,0.10);color:#3a5fcc; }
+    .nav-item.active {
+      background:linear-gradient(90deg,rgba(74,124,247,0.18),rgba(74,124,247,0.06));
+      color:#3a5fcc;font-weight:600;
+    }
+    .nav-item .nav-icon { font-size:16px; }
+    .sidebar-divider { height:1px;background:rgba(180,190,220,0.35);margin:10px 18px; }
+    .trend-label { padding:4px 18px 8px;font-size:12px;font-weight:600;color:#7a8aaa;display:flex;align-items:center;gap:5px; }
+    .trend-card {
+      margin:0 10px;border-radius:12px;overflow:hidden;
+      position:relative;height:120px;cursor:pointer;flex-shrink:0;
+    }
+    .trend-card:hover .trend-bg { transform:scale(1.05); }
+    .trend-bg {
+      width:100%;height:100%;
+      background:linear-gradient(135deg,#2a6abf,#1a3a70,#3a5a9a);
+      display:flex;align-items:center;justify-content:center;
+      font-size:36px;transition:transform .3s;
+    }
+    .trend-card-overlay {
+      position:absolute;inset:0;
+      background:linear-gradient(to top,rgba(0,0,0,0.55) 40%,transparent 100%);
+      display:flex;flex-direction:column;justify-content:flex-end;padding:10px;
+    }
+    .trend-card-overlay .pin { font-size:11px;color:rgba(255,255,255,0.85); }
+    .trend-card-overlay .city-name { font-size:14px;font-weight:700;color:#fff; }
+    .trend-card-overlay .city-sub { font-size:10.5px;color:rgba(255,255,255,0.75); }
+    .sidebar-footer { margin-top:auto;padding:8px 10px 4px; }
+    .footer-btn {
+      display:flex;align-items:center;gap:8px;
+      padding:7px 12px;font-size:12.5px;color:#7a8aaa;
+      cursor:pointer;border-radius:8px;transition:background .15s;
+    }
+    .footer-btn:hover { background:rgba(74,124,247,0.08);color:#4a7cf7; }
+
+    /* ── Center panel ── */
+    .center-panel {
+      display:flex;flex-direction:column;
+      padding:16px 20px 12px;position:relative;overflow:hidden;
+    }
+    .search-bar {
+      display:flex;align-items:center;
+      background:rgba(255,255,255,0.75);
+      backdrop-filter:blur(12px);
+      border:1px solid rgba(200,215,245,0.6);
+      border-radius:50px;padding:8px 16px;gap:10px;
+      box-shadow:0 2px 12px rgba(80,100,180,0.08);
+      flex-shrink:0;
+    }
+    .search-bar input { flex:1;background:none;border:none;outline:none;font-size:13px;color:#3a4a6a; }
+    .search-bar input::placeholder { color:#aab0c8; }
+    .search-icon { color:#7a8aaa;font-size:14px; }
+    .search-filter-btn {
+      width:28px;height:28px;background:rgba(74,124,247,0.12);
+      border:none;border-radius:8px;display:flex;align-items:center;
+      justify-content:center;cursor:pointer;color:#4a7cf7;font-size:14px;
+    }
+
+    /* Globe area */
+    .globe-area {
+      flex:1;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      position:relative;margin-top:4px;
+    }
+
+    /* ── Three.js globe container ── */
+    .globe-wrap {
+      position:relative;
+      width:290px;height:290px;
+      flex-shrink:0;
+    }
+    .globe-wrap canvas {
+      display:block;
+      border-radius:50%;        /* soft circular crop */
+      cursor:grab;
+    }
+    .globe-wrap canvas:active { cursor:grabbing; }
+
+    /* Soft shadow under globe */
+    .globe-shadow {
+      position:absolute;
+      bottom:-14px;left:50%;transform:translateX(-50%);
+      width:200px;height:22px;
+      background:radial-gradient(ellipse,rgba(60,100,200,0.22),transparent 70%);
+      border-radius:50%;
+      pointer-events:none;
+    }
+
+    /* City pins (absolutely positioned over canvas via JS) */
+    .city-pin {
+      position:absolute;
+      display:flex;flex-direction:column;align-items:center;
+      pointer-events:none;
+      transition:opacity .2s;
+      z-index:10;
+    }
+    .city-pin .pin-label {
+      background:rgba(255,255,255,0.92);
+      backdrop-filter:blur(8px);
+      border:1px solid rgba(200,215,245,0.7);
+      border-radius:20px;padding:3px 10px;
+      font-size:11.5px;font-weight:600;color:#2d4a8a;
+      margin-bottom:4px;white-space:nowrap;
+      box-shadow:0 2px 8px rgba(80,100,180,0.12);
+      pointer-events:auto;cursor:pointer;
+    }
+    .city-pin .pin-dot {
+      width:10px;height:10px;
+      background:#fff;border:2.5px solid #4a7cf7;border-radius:50%;
+      box-shadow:0 0 0 4px rgba(74,124,247,0.2);
+      animation:pin-pulse 2s infinite;
+    }
+    .city-pin.pin-red    .pin-dot { border-color:#f45f7a;box-shadow:0 0 0 4px rgba(244,95,122,0.2); }
+    .city-pin.pin-purple .pin-dot { border-color:#7b5ea7;box-shadow:0 0 0 4px rgba(123,94,167,0.2); }
+    @keyframes pin-pulse {
+      0%,100% { box-shadow:0 0 0 4px rgba(74,124,247,0.2); }
+      50%      { box-shadow:0 0 0 8px rgba(74,124,247,0.06); }
+    }
+
+    /* Globe controls */
+    .globe-controls {
+      position:absolute;left:-38px;top:50%;transform:translateY(-50%);
+      display:flex;flex-direction:column;gap:4px;
+    }
+    .globe-ctrl-group {
+      background:rgba(255,255,255,0.75);backdrop-filter:blur(12px);
+      border:1px solid rgba(200,215,245,0.6);border-radius:10px;
+      padding:6px;display:flex;flex-direction:column;align-items:center;gap:2px;
+    }
+    .ctrl-btn {
+      width:26px;height:26px;background:none;border:none;border-radius:6px;
+      cursor:pointer;font-size:14px;color:#5a6a8a;
+      display:flex;align-items:center;justify-content:center;transition:background .15s;
+    }
+    .ctrl-btn:hover { background:rgba(74,124,247,0.10);color:#4a7cf7; }
+    .ctrl-label { font-size:9px;color:#aab0c8;margin-top:1px; }
+
+    /* Hint + tagline */
+    .globe-hint { color:#5a7adf;font-size:12px;display:flex;align-items:center;gap:4px;margin-bottom:2px; }
+    .globe-tagline { font-size:24px;font-weight:700;color:#2d3a5a;margin:4px 0 8px;text-align:center; }
+
+    /* Filter chips */
+    .filter-chips { display:flex;gap:8px; }
+    .filter-chip {
+      display:flex;align-items:center;gap:6px;
+      padding:8px 14px;border-radius:12px;
+      font-size:12px;font-weight:500;cursor:pointer;
+      border:1px solid transparent;transition:all .15s;
+    }
+    .chip-blue { background:rgba(74,124,247,0.10);color:#3a5fcc;border-color:rgba(74,124,247,0.2); }
+    .chip-green{ background:rgba(52,199,89,0.10); color:#1a8a45;border-color:rgba(52,199,89,0.2); }
+    .chip-icon { width:18px;height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px; }
+    .chip-blue  .chip-icon { background:#4a7cf7;color:#fff; }
+    .chip-green .chip-icon { background:#34c759;color:#fff; }
+
+    /* ── Right panel ── */
+    .right-panel {
+      background:rgba(255,255,255,0.50);
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      border-left:1px solid rgba(255,255,255,0.6);
+      padding:16px 14px;display:flex;flex-direction:column;gap:14px;
+      overflow-y:auto;
+    }
+    .right-panel::-webkit-scrollbar { width:3px; }
+    .right-panel::-webkit-scrollbar-thumb { background:rgba(180,190,220,0.4);border-radius:2px; }
+    .section-title { font-size:13px;font-weight:700;color:#2d3a5a;display:flex;align-items:center;gap:5px;margin-bottom:8px; }
+
+    /* Smart picks */
+    .picks-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:7px; }
+    .pick-card {
+      border-radius:10px;overflow:hidden;cursor:pointer;position:relative;
+      aspect-ratio:1/1;transition:transform .2s;
+    }
+    .pick-card:hover { transform:scale(1.03); }
+    .pick-card img { width:100%;height:100%;object-fit:cover; }
+    .pick-card-label {
+      position:absolute;bottom:0;left:0;right:0;
+      background:linear-gradient(to top,rgba(0,0,0,0.6),transparent);
+      padding:16px 7px 6px;font-size:12px;font-weight:700;color:#fff;text-align:center;
+    }
+
+    /* Continue planning */
+    .continue-card {
+      background:rgba(255,255,255,0.65);border:1px solid rgba(200,215,245,0.5);
+      border-radius:12px;display:flex;align-items:center;gap:10px;padding:10px;
+      cursor:pointer;transition:box-shadow .2s;
+    }
+    .continue-card:hover { box-shadow:0 4px 16px rgba(80,100,180,0.12); }
+    .continue-card img { width:54px;height:54px;border-radius:8px;object-fit:cover;flex-shrink:0; }
+    .continue-info { flex:1;min-width:0; }
+    .continue-info .trip-name { font-size:13px;font-weight:600;color:#2d3a5a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .continue-info .trip-sub  { font-size:11px;color:#8a9aba;margin-top:2px; }
+    .continue-progress { margin-top:6px;height:4px;background:rgba(180,190,220,0.3);border-radius:2px;overflow:hidden; }
+    .continue-progress .bar { height:100%;background:linear-gradient(90deg,#4a7cf7,#7b5ea7);border-radius:2px; }
+    .progress-label { font-size:10px;color:#aab0c8;margin-top:3px; }
+    .continue-arrow { color:#aab0c8;font-size:14px;flex-shrink:0; }
+
+    /* Forum */
+    .forum-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:8px; }
+    .see-more { font-size:11.5px;color:#4a7cf7;cursor:pointer; }
+    .forum-item {
+      display:flex;align-items:center;gap:9px;padding:8px;
+      background:rgba(255,255,255,0.55);border-radius:10px;cursor:pointer;
+      border:1px solid rgba(200,215,245,0.4);transition:background .15s;
+    }
+    .forum-item:hover { background:rgba(255,255,255,0.80); }
+    .forum-avatar { width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0; }
+    .forum-info { flex:1;min-width:0; }
+    .forum-info .forum-title { font-size:12px;font-weight:600;color:#2d3a5a; }
+    .forum-info .forum-meta  { font-size:10.5px;color:#aab0c8;margin-top:1px; }
+    .forum-chevron { color:#aab0c8;font-size:12px; }
+
+    /* Skeleton shimmer */
+    @keyframes shimmer {
+      0%   { background-position:-400px 0; }
+      100% { background-position:400px 0; }
+    }
+    .skeleton {
+      background:linear-gradient(90deg,rgba(200,210,240,0.3) 25%,rgba(220,230,255,0.6) 50%,rgba(200,210,240,0.3) 75%);
+      background-size:800px 100%;
+      animation:shimmer 1.8s infinite linear;
+      border-radius:8px;
+    }
+
+    /* Loading overlay on globe */
+    #globeLoader {
+      position:absolute;inset:0;border-radius:50%;
+      background:radial-gradient(circle at 38% 35%,#4fc3f7,#1a7abf 35%,#0d4f8a 70%,#062040);
+      display:flex;align-items:center;justify-content:center;
+      transition:opacity .8s;z-index:5;
+    }
+    #globeLoader.hidden { opacity:0;pointer-events:none; }
+    .loader-spin {
+      width:32px;height:32px;border:3px solid rgba(255,255,255,0.3);
+      border-top-color:rgba(255,255,255,0.9);border-radius:50%;
+      animation:spin .9s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body class="flex items-center justify-center">
+
+<div class="app-window">
+  <!-- Title bar -->
+  <div class="title-bar">
+    <button class="win-btn close"></button>
+    <button class="win-btn minimise"></button>
+    <button class="win-btn full"></button>
+  </div>
+
+  <!-- Main 3-column layout -->
+  <div class="main-layout">
+
+    <!-- ══ LEFT SIDEBAR ══ -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">✈️</div>
+        TravelMate AI
+      </div>
+      <nav>
+        <div class="nav-item active">
+          <span class="nav-icon">🗺️</span> 我的行程
+          <span style="margin-left:4px;font-size:11px;color:#8a9aba">(Trips)</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">🔍</span> 探索市集
+          <span style="margin-left:4px;font-size:11px;color:#8a9aba">(Explore)</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">❤️</span> 收藏景點
+          <span style="margin-left:4px;font-size:11px;color:#8a9aba">(Saved)</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">💬</span> 找旅伴
+          <span style="margin-left:4px;font-size:11px;color:#8a9aba">(論壇)</span>
+        </div>
+      </nav>
+      <div class="sidebar-divider"></div>
+      <div class="trend-label">🔥 趨勢推薦：</div>
+      <div class="trend-card">
+        <div class="trend-bg">🏖️</div>
+        <div class="trend-card-overlay">
+          <div class="pin">📍 釜山海雲台</div>
+          <div class="city-name">釜山海雲台</div>
+          <div class="city-sub">韓國・釜山廣域市</div>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="sidebar-divider" style="margin:0 8px 8px;"></div>
+        <div class="footer-btn">🎨 切換主題</div>
+        <div class="footer-btn">☰ 收合選單</div>
+      </div>
+    </aside>
+
+    <!-- ══ CENTER PANEL ══ -->
+    <main class="center-panel">
+      <!-- Search -->
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="搜尋城市、景點或論壇文章…" id="searchInput" />
+        <button class="search-filter-btn">⚙</button>
+      </div>
+
+      <!-- Globe area -->
+      <div class="globe-area">
+
+        <!-- Globe controls (left of globe) -->
+        <div class="globe-controls">
+          <div class="globe-ctrl-group">
+            <button class="ctrl-btn" title="拖曳旋轉">☁</button>
+            <div class="ctrl-label">拖曳旋轉</div>
+          </div>
+          <div class="globe-ctrl-group">
+            <button class="ctrl-btn" id="zoomIn">＋</button>
+            <div class="ctrl-label">放大</div>
+            <button class="ctrl-btn" id="zoomOut">－</button>
+            <div class="ctrl-label">縮小</div>
+          </div>
+          <div class="globe-ctrl-group">
+            <button class="ctrl-btn" title="定位我">⊕</button>
+            <div class="ctrl-label">定位我</div>
+          </div>
+        </div>
+
+        <!-- Three.js canvas wrapper -->
+        <div class="globe-wrap" id="globeWrap">
+          <!-- Loading placeholder shown until textures load -->
+          <div id="globeLoader"><div class="loader-spin"></div></div>
+
+          <!-- City pins (JS repositions these each frame) -->
+          <div class="city-pin pin-red"    id="pin-tokyo">
+            <div class="pin-label">東京</div><div class="pin-dot"></div>
+          </div>
+          <div class="city-pin pin-purple" id="pin-busan">
+            <div class="pin-label">釜山</div><div class="pin-dot"></div>
+          </div>
+          <div class="city-pin"            id="pin-bangkok">
+            <div class="pin-label">曼谷</div><div class="pin-dot"></div>
+          </div>
+        </div>
+        <div class="globe-shadow"></div>
+
+        <div class="globe-hint" style="margin-top:10px;">👆 可互動、點擊城市</div>
+        <div class="globe-tagline">Where to next?</div>
+        <p style="font-size:12px;color:#7a8aaa;margin-bottom:12px;">轉動地球探索，或由AI協助規劃</p>
+
+        <!-- Filter chips -->
+        <div class="filter-chips">
+          <div class="filter-chip chip-blue">
+            <div class="chip-icon">💎</div>
+            <div>
+              <div style="font-size:11px;font-weight:700;">預算低於 $20,000</div>
+              <div style="font-size:10px;color:#5a7adf;">精選高CP值旅遊地點</div>
+            </div>
+          </div>
+          <div class="filter-chip chip-green">
+            <div class="chip-icon">🌿</div>
+            <div>
+              <div style="font-size:11px;font-weight:700;">適合獨旅的城市</div>
+              <div style="font-size:10px;color:#2a8a55;">安全、友善、好探索</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /globe-area -->
+    </main>
+
+    <!-- ══ RIGHT PANEL ══ -->
+    <aside class="right-panel" id="rightPanel">
+      <section>
+        <div class="section-title">
+          <span>✨</span> 為你推薦
+          <span style="font-size:11px;color:#8a9aba;font-weight:400;margin-left:2px">(Smart picks)</span>
+        </div>
+        <div class="picks-grid" id="picksGrid">
+          <div class="skeleton" style="aspect-ratio:1;border-radius:10px;"></div>
+          <div class="skeleton" style="aspect-ratio:1;border-radius:10px;"></div>
+          <div class="skeleton" style="aspect-ratio:1;border-radius:10px;"></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-title">
+          📅 繼續規劃
+          <span style="font-size:11px;color:#8a9aba;font-weight:400;margin-left:2px">(Continue)</span>
+        </div>
+        <div id="continueCards">
+          <div class="skeleton" style="height:72px;border-radius:12px;"></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="forum-header">
+          <div class="section-title" style="margin-bottom:0">💬 論壇最新招募</div>
+          <div class="see-more" id="seeMoreBtn">查看更多 &rsaquo;</div>
+        </div>
+        <div id="forumList" style="display:flex;flex-direction:column;gap:6px;">
+          <div class="skeleton" style="height:52px;border-radius:10px;"></div>
+        </div>
+      </section>
+
+      <div style="margin-top:auto;display:flex;justify-content:flex-end;padding-top:6px;">
+        <svg width="100" viewBox="0 0 120 70" xmlns="http://www.w3.org/2000/svg" opacity=".7">
+          <circle cx="40" cy="25" r="10" fill="#c5d5f0"/>
+          <rect x="32" y="35" width="16" height="22" rx="5" fill="#b0c4e8"/>
+          <circle cx="75" cy="22" r="11" fill="#d5c5f0"/>
+          <rect x="66" y="33" width="18" height="22" rx="5" fill="#c0aae0"/>
+          <rect x="44" y="48" width="10" height="8" rx="2" fill="#7a9ad0"/>
+          <text x="88" y="18" font-size="18" opacity=".4">✈</text>
+        </svg>
+      </div>
+    </aside>
+
+  </div><!-- /main-layout -->
+</div><!-- /app-window -->
+
+<!-- ══════════════ Three.js CDN ══════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════
+//  3-D GLOBE  (Three.js r160)
+// ═══════════════════════════════════════════════════
+(function initGlobe() {
+  const wrap = document.getElementById('globeWrap');
+  const SIZE = 290;        // CSS px (matches .globe-wrap)
+
+  // ── Renderer ──────────────────────────────────────
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(SIZE, SIZE);
+  renderer.shadowMap.enabled = false;
+  // Insert canvas BEFORE loader overlay so pins stay on top
+  wrap.insertBefore(renderer.domElement, wrap.firstChild);
+
+  // ── Scene & Camera ────────────────────────────────
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+  camera.position.z = 3.0;
+
+  // ── Lights ────────────────────────────────────────
+  scene.add(new THREE.AmbientLight(0x334466, 2.2));
+  const sun = new THREE.DirectionalLight(0xfff5e8, 2.8);
+  sun.position.set(5, 3, 5);
+  scene.add(sun);
+  // Soft fill from the other side
+  const fill = new THREE.DirectionalLight(0x4488cc, 0.5);
+  fill.position.set(-4, -1, -3);
+  scene.add(fill);
+
+  // ── Textures (GitHub raw = CORS-safe) ─────────────
+  const BASE  = 'https://raw.githubusercontent.com/mrdoob/three.js/r160/examples/textures/planets/';
+  const loader = new THREE.TextureLoader();
+  loader.crossOrigin = 'anonymous';
+
+  let loadedCount = 0;
+  function onTexLoad() {
+    loadedCount++;
+    if (loadedCount >= 3) {           // all core textures ready
+      document.getElementById('globeLoader').classList.add('hidden');
+    }
+  }
+
+  const texDay      = loader.load(BASE + 'earth_atmos_2048.jpg',    onTexLoad);
+  const texNormal   = loader.load(BASE + 'earth_normal_2048.jpg',   onTexLoad);
+  const texSpecular = loader.load(BASE + 'earth_specular_2048.jpg', onTexLoad);
+
+  // ── Earth sphere ──────────────────────────────────
+  const earthGeo = new THREE.SphereGeometry(1, 64, 64);
+  const earthMat = new THREE.MeshPhongMaterial({
+    map:         texDay,
+    normalMap:   texNormal,
+    normalScale: new THREE.Vector2(0.85, 0.85),
+    specularMap: texSpecular,
+    specular:    new THREE.Color(0x3366cc),
+    shininess:   28,
+  });
+  const earth = new THREE.Mesh(earthGeo, earthMat);
+  // Start with Asia-Pacific region facing front
+  earth.rotation.y = -0.8;
+  scene.add(earth);
+
+  // ── Atmosphere glow (BackSide fresnel trick) ───────
+  const atmMat = new THREE.ShaderMaterial({
+    uniforms: {},
+    vertexShader: `
+      varying vec3 vNormal;
+      void main(){
+        vNormal = normalize(normalMatrix * normal);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+      }`,
+    fragmentShader: `
+      varying vec3 vNormal;
+      void main(){
+        float i = pow(0.72 - dot(vNormal, vec3(0.0,0.0,1.0)), 3.8);
+        gl_FragColor = vec4(0.28, 0.62, 1.0, 1.0) * i * 1.4;
+      }`,
+    side:       THREE.BackSide,
+    blending:   THREE.AdditiveBlending,
+    transparent: true,
+    depthWrite:  false,
+  });
+  const atm = new THREE.Mesh(new THREE.SphereGeometry(1.18, 48, 48), atmMat);
+  scene.add(atm);
+
+  // Inner haze (thin blue shell just outside Earth)
+  const hazeMat = new THREE.ShaderMaterial({
+    uniforms: {},
+    vertexShader: `
+      varying vec3 vNormal;
+      void main(){
+        vNormal = normalize(normalMatrix * normal);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+      }`,
+    fragmentShader: `
+      varying vec3 vNormal;
+      void main(){
+        float i = pow(max(0.0, dot(vNormal, vec3(0.0,0.0,1.0)) - 0.35), 1.8);
+        gl_FragColor = vec4(0.5, 0.75, 1.0, i * 0.18);
+      }`,
+    side:        THREE.FrontSide,
+    blending:    THREE.NormalBlending,
+    transparent: true,
+    depthWrite:  false,
+  });
+  const haze = new THREE.Mesh(new THREE.SphereGeometry(1.015, 48, 48), hazeMat);
+  scene.add(haze);
+
+  // ── City pins ─────────────────────────────────────
+  // lat/lon → unit vector on sphere surface
+  function llToVec3(lat, lon) {
+    const phi   = (90 - lat) * Math.PI / 180;
+    const theta = (lon + 180) * Math.PI / 180;
+    return new THREE.Vector3(
+      -Math.sin(phi) * Math.cos(theta),
+       Math.cos(phi),
+       Math.sin(phi) * Math.sin(theta)
+    );
+  }
+
+  const CITIES = [
+    { el: document.getElementById('pin-tokyo'),   vec: llToVec3(35.68, 139.69) },
+    { el: document.getElementById('pin-busan'),   vec: llToVec3(35.10, 129.04) },
+    { el: document.getElementById('pin-bangkok'), vec: llToVec3(13.75, 100.52) },
+  ];
+
+  function updatePins() {
+    CITIES.forEach(c => {
+      // World-space position after Earth rotation
+      const wp = c.vec.clone().applyEuler(earth.rotation);
+
+      // Hide if on dark side (z < threshold)
+      if (wp.z < 0.12) {
+        c.el.style.opacity = '0';
+        return;
+      }
+      c.el.style.opacity = String(Math.min(1, (wp.z - 0.12) * 5));
+
+      // Project to CSS pixels
+      const proj = wp.clone().project(camera);
+      const x = (proj.x *  0.5 + 0.5) * SIZE;
+      const y = (proj.y * -0.5 + 0.5) * SIZE;
+
+      c.el.style.left      = x + 'px';
+      c.el.style.top       = y + 'px';
+      c.el.style.transform = 'translate(-50%, -100%)';
+    });
+  }
+
+  // ── Drag rotation ────────────────────────────────
+  let dragging = false;
+  let prev = { x: 0, y: 0 };
+  let vel  = { x: 0, y: 0 };
+  const DRAG = 0.0045;
+  const DAMP = 0.92;
+  const AUTO = 0.0018;
+
+  function onDown(x, y) { dragging = true; prev = {x,y}; vel = {x:0,y:0}; }
+  function onMove(x, y) {
+    if (!dragging) return;
+    vel.y = (x - prev.x) * DRAG;
+    vel.x = (y - prev.y) * DRAG;
+    earth.rotation.x += vel.x;
+    earth.rotation.y += vel.y;
+    prev = {x, y};
+  }
+  function onUp() { dragging = false; }
+
+  const cvs = renderer.domElement;
+  cvs.addEventListener('mousedown',  e => onDown(e.clientX, e.clientY));
+  window.addEventListener('mousemove',e => onMove(e.clientX, e.clientY));
+  window.addEventListener('mouseup',  onUp);
+  cvs.addEventListener('touchstart', e => { e.preventDefault(); onDown(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
+  cvs.addEventListener('touchmove',  e => { e.preventDefault(); onMove(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
+  cvs.addEventListener('touchend',   onUp);
+
+  // ── Zoom buttons ──────────────────────────────────
+  document.getElementById('zoomIn') .addEventListener('click', () => { camera.position.z = Math.max(1.8, camera.position.z - 0.2); });
+  document.getElementById('zoomOut').addEventListener('click', () => { camera.position.z = Math.min(5.0, camera.position.z + 0.2); });
+
+  // ── Render loop ──────────────────────────────────
+  function animate() {
+    requestAnimationFrame(animate);
+
+    if (!dragging) {
+      earth.rotation.y += AUTO;
+      earth.rotation.x += vel.x;
+      earth.rotation.y += vel.y;
+      vel.x *= DAMP;
+      vel.y *= DAMP;
+    }
+
+    // Sync atmosphere
+    atm.rotation.copy(earth.rotation);
+    haze.rotation.copy(earth.rotation);
+
+    updatePins();
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+
+// ═══════════════════════════════════════════════════
+//  APP DATA / UI
+// ═══════════════════════════════════════════════════
+const BASE_URL = 'https://localhost:7001/api';
+
+const CITY_GRADIENTS = {
+  '曼谷': 'linear-gradient(135deg,#f0a500,#e05d00)',
+  '釜山': 'linear-gradient(135deg,#2a6abf,#1a3a70)',
+  '東京': 'linear-gradient(135deg,#c8325a,#8a1a40)',
+};
+const CITY_EMOJIS = { '曼谷':'🏯', '釜山':'🌊', '東京':'⛩️' };
+
+const MOCK = {
+  recommendations: [
+    { id:1, cityName:'曼谷', country:'泰國',  tag:'熱門',     imageUrl:null },
+    { id:2, cityName:'釜山', country:'韓國',  tag:'CP值高',   imageUrl:null },
+    { id:3, cityName:'東京', country:'日本',  tag:'獨旅推薦', imageUrl:null },
+  ],
+  trips: [
+    { id:1, title:'釜山五日放鬆行', subtitle:'還有 2 個空檔尚未安排', progressPercent:60, imageUrl:null }
+  ],
+  forumPosts: [
+    { id:1, title:'4/14 釜山找人吃烤肉！', replyCount:3, replyLabel:'已有 3 人回覆・剛剛', avatarUrl:null }
+  ]
+};
+
+async function fetchJSON(path) {
+  try {
+    const res = await fetch(`${BASE_URL}${path}`);
+    if (!res.ok) throw new Error(res.statusText);
+    return await res.json();
+  } catch { return null; }
+}
+
+function renderPicks(data) {
+  const grid = document.getElementById('picksGrid');
+  grid.innerHTML = '';
+  data.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'pick-card';
+    if (item.imageUrl) {
+      card.innerHTML = `<img src="${item.imageUrl}" alt="${item.cityName}" loading="lazy"/>
+        <div class="pick-card-label">${item.cityName}</div>`;
+    } else {
+      const g = CITY_GRADIENTS[item.cityName] || 'linear-gradient(135deg,#6a8acf,#3a5a9a)';
+      const e = CITY_EMOJIS[item.cityName] || '🌍';
+      card.innerHTML = `<div style="width:100%;height:100%;background:${g};display:flex;align-items:center;justify-content:center;font-size:28px;">${e}</div>
+        <div class="pick-card-label">${item.cityName}</div>`;
+    }
+    card.addEventListener('click', () => alert(`開啟 ${item.cityName} 景點詳情`));
+    grid.appendChild(card);
+  });
+}
+
+function renderTrips(data) {
+  const container = document.getElementById('continueCards');
+  container.innerHTML = '';
+  data.forEach(trip => {
+    const el = document.createElement('div');
+    el.className = 'continue-card';
+    const img = trip.imageUrl
+      ? `<img src="${trip.imageUrl}" alt="${trip.title}"/>`
+      : `<div style="width:54px;height:54px;border-radius:8px;background:linear-gradient(135deg,#2a6abf,#1a3a70);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">🌊</div>`;
+    el.innerHTML = `${img}
+      <div class="continue-info">
+        <div class="trip-name">${trip.title}</div>
+        <div class="trip-sub">${trip.subtitle}</div>
+        <div class="continue-progress"><div class="bar" style="width:${trip.progressPercent}%"></div></div>
+        <div class="progress-label">行程完成度 ${trip.progressPercent}%</div>
+      </div>
+      <div class="continue-arrow">›</div>`;
+    el.addEventListener('click', () => alert(`開啟行程：${trip.title}`));
+    container.appendChild(el);
+  });
+}
+
+function renderForum(data) {
+  const list = document.getElementById('forumList');
+  list.innerHTML = '';
+  data.forEach(post => {
+    const el = document.createElement('div');
+    el.className = 'forum-item';
+    const avatar = post.avatarUrl
+      ? `<img src="${post.avatarUrl}" class="forum-avatar" alt="avatar"/>`
+      : `<div class="forum-avatar" style="background:linear-gradient(135deg,#c5b5e8,#8a70c0);display:flex;align-items:center;justify-content:center;font-size:14px;">👤</div>`;
+    el.innerHTML = `${avatar}
+      <div class="forum-info">
+        <div class="forum-title">${post.title}</div>
+        <div class="forum-meta">${post.replyLabel}</div>
+      </div>
+      <div class="forum-chevron">›</div>`;
+    el.addEventListener('click', () => alert(`開啟討論串：${post.title}`));
+    list.appendChild(el);
+  });
+}
+
+// Nav active state
+document.querySelectorAll('.nav-item').forEach(el =>
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+  })
+);
+
+document.getElementById('seeMoreBtn').addEventListener('click', () => alert('查看更多論壇文章'));
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') alert(`搜尋：${e.target.value}`);
+});
+
+// Bootstrap data
+(async () => {
+  const [picks, trips, forum] = await Promise.all([
+    fetchJSON('/recommendations'),
+    fetchJSON('/trips/active'),
+    fetchJSON('/forum/posts?limit=3'),
+  ]);
+  renderPicks(picks  || MOCK.recommendations);
+  renderTrips(trips  || MOCK.trips);
+  renderForum(forum  || MOCK.forumPosts);
+})();
+</script>
+</body>
+</html>

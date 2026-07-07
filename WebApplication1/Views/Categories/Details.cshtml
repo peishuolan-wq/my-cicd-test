@@ -1,0 +1,36 @@
+@model WebApplication1.Models.EfModels.Category
+
+@{
+    ViewData["Title"] = "商品分類詳細資料";
+}
+
+<div class="container mt-4">
+    <h2>商品分類詳細資料</h2>
+    <hr />
+
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.CategoryName)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.CategoryName)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.DisplayOrder)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.DisplayOrder)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.IsDeleted)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.IsDeleted)
+        </dd>
+    </dl>
+
+    <div class="mt-4">
+        <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary px-4">編輯</a>
+        <a asp-action="Index" class="btn btn-outline-secondary ms-2">返回列表</a>
+    </div>
+</div>

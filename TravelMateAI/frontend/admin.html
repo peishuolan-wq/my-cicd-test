@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LazyTravel 商家數據管理中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- 左側導覽列 -->
+    <aside class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between z-10 shrink-0">
+        <div>
+            <div class="p-6 border-b border-slate-100 flex items-center gap-3">
+                <div class="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-500 font-bold text-xl">
+                    <i class="fa-solid fa-plane-departure"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-800 text-lg leading-tight">LazyTravel</h1>
+                    <span class="text-xs text-rose-500 font-medium">後台管理系統</span>
+                </div>
+            </div>
+
+            <nav class="p-4 space-y-1.5">
+                <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">數據統計</p>
+                
+                <button onclick="switchTab('dashboard', this)" class="tab-btn w-full flex items-center gap-3 px-3 py-3 text-slate-600 rounded-xl hover:bg-slate-50 transition-all font-medium text-left active bg-rose-50/50 text-rose-600">
+                    <i class="fa-solid fa-chart-pie text-lg"></i>
+                    <span>營運數據總覽</span>
+                </button>
+                
+                <button onclick="switchTab('itinerary', this)" class="tab-btn w-full flex items-center gap-3 px-3 py-3 text-slate-600 rounded-xl hover:bg-slate-50 transition-all font-medium text-left">
+                    <i class="fa-solid fa-route text-lg"></i>
+                    <span>熱門行程分析</span>
+                </button>
+                
+                <button onclick="switchTab('orders', this)" class="tab-btn w-full flex items-center gap-3 px-3 py-3 text-slate-600 rounded-xl hover:bg-slate-50 transition-all font-medium text-left">
+                    <i class="fa-solid fa-receipt text-lg"></i>
+                    <span>訂單狀態統計</span>
+                </button>
+
+                <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider pt-6 mb-3">安全與系統</p>
+
+                <button onclick="switchTab('security', this)" class="tab-btn w-full flex items-center gap-3 px-3 py-3 text-slate-600 rounded-xl hover:bg-slate-50 transition-all font-medium text-left">
+                    <i class="fa-solid fa-shield-halved text-lg"></i>
+                    <span>權限與路由設定</span>
+                </button>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-slate-100 bg-slate-50/50">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">
+                    茹
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold text-slate-700">專案管理員</h4>
+                    <span class="text-xs text-slate-400">權限身分: Admin</span>
+                </div>
+            </div>
+            <a href="index.html" class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all font-medium">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>回使用者首頁</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- 右側內容區 -->
+    <main class="flex-grow flex flex-col bg-slate-50 overflow-hidden">
+        <header class="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center shrink-0">
+            <div>
+                <h2 id="page-title" class="text-xl font-bold text-slate-800">營運數據總覽</h2>
+                <p id="page-desc" class="text-xs text-slate-400 mt-1">即時統計全站點擊、營業額與核心營運數據</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-xs font-bold flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    連線安全 (C# API 正常對接中)
+                </span>
+            </div>
+        </header>
+
+        <div class="p-8 flex-grow overflow-y-auto">
+
+            <!-- 分頁 1 -->
+            <div id="tab-dashboard" class="tab-content active space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-400 mb-1">今日全站瀏覽數</p>
+                            <h3 class="text-3xl font-bold text-slate-800">1,250 <span class="text-xs text-slate-400">次</span></h3>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center text-xl">
+                            <i class="fa-regular fa-eye"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-400 mb-1">今日訂單總金額</p>
+                            <h3 class="text-3xl font-bold text-slate-800">NT$ 128,000</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-coins"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-400 mb-1">本週最熱門行程</p>
+                            <h3 class="text-lg font-bold text-rose-500 mt-1">太魯閣國家公園一日遊</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-fire"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-chart-line text-slate-400"></i>近 30 天全站點擊瀏覽量變化</h3>
+                    <div class="h-80 w-full relative"><canvas id="trendChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- 分頁 2 -->
+            <div id="tab-itinerary" class="tab-content space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                        <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-chart-bar text-rose-500"></i>行程排行榜 (點擊數統計)</h3>
+                        <div class="h-80 relative"><canvas id="itineraryChart"></canvas></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                        <h3 class="text-base font-bold text-slate-800 mb-4">點擊統計數據明細</h3>
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead>
+                                <tr class="border-b border-slate-100 text-slate-400 font-medium"><th class="pb-3">行程名稱</th><th class="pb-3 text-right">總點擊數</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr><td class="py-3 font-medium text-slate-800">太魯閣國家公園一日遊</td><td class="py-3 text-right font-bold text-rose-500">980 次</td></tr>
+                                <tr><td class="py-3 font-medium text-slate-800">象山步道半日輕旅行</td><td class="py-3 text-right font-bold">850 次</td></tr>
+                                <tr><td class="py-3 font-medium text-slate-800">日月潭遊湖與單車行</td><td class="py-3 text-right font-bold">780 次</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分頁 3 -->
+            <div id="tab-orders" class="tab-content space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-chart-pie text-emerald-500"></i>本月訂單狀態佔比</h3>
+                            <div class="h-64 relative flex items-center justify-center"><canvas id="orderPieChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm lg:col-span-2">
+                        <h3 class="text-base font-bold text-slate-800 mb-4">即時交易流水帳</h3>
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <tbody class="divide-y divide-slate-100">
+                                <tr><td class="py-3 font-mono">TRIP-2026061801</td><td class="py-3 font-medium">太魯閣國家公園一日遊</td><td class="py-3 text-right font-bold">NT$ 2,500</td></tr>
+                                <tr><td class="py-3 font-mono">TRIP-2026061802</td><td class="py-3 font-medium">日月潭遊湖與單車行</td><td class="py-3 text-right font-bold">NT$ 3,800</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分頁 4 -->
+            <div id="tab-security" class="tab-content space-y-6">
+                <div class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm max-w-3xl">
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">🔒 路由安全與商家角色驗證</h3>
+                    <p class="text-sm text-slate-500">此頁面已受前端路由與 C# 後端 API 的多重角色驗證保護。</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('bg-rose-50/50', 'text-rose-600'));
+            btnElement.classList.add('bg-rose-50/50', 'text-rose-600');
+            
+            const title = document.getElementById('page-title');
+            const desc = document.getElementById('page-desc');
+            if (tabId === 'dashboard') { title.innerText = "營運數據總覽"; desc.innerText = "即時統計全站點擊、營業額與核心營運數據"; }
+            else if (tabId === 'itinerary') { title.innerText = "熱門行程分析"; desc.innerText = "分析哪些行程最受歡迎，作為上下架調整依據"; }
+            else if (tabId === 'orders') { title.innerText = "訂單狀態統計"; desc.innerText = "掌控已付款、待處理訂單"; }
+            else if (tabId === 'security') { title.innerText = "權限與路由設定"; desc.innerText = "檢視安全隔離路由狀況"; }
+        }
+
+        // Charts
+        new Chart(document.getElementById('trendChart').getContext('2d'), {
+            type: 'line',
+            data: { labels: ['5/20', '5/25', '5/30', '6/04', '6/09', '6/14', '6/18'], datasets: [{ data: [350, 480, 520, 450, 800, 950, 1250], borderColor: '#f43f5e', backgroundColor: 'rgba(244, 63, 94, 0.05)', fill: true, tension: 0.3 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+
+        new Chart(document.getElementById('itineraryChart').getContext('2d'), {
+            type: 'bar',
+            data: { labels: ['太魯閣一日', '象山步道', '日月潭遊湖', '獨木舟體驗'], datasets: [{ data: [980, 850, 780, 190], backgroundColor: ['#f43f5e', '#3b82f6', '#f59e0b', '#10b981'] }] },
+            options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+        });
+
+        new Chart(document.getElementById('orderPieChart').getContext('2d'), {
+            type: 'doughnut',
+            data: { labels: ['已付款', '待處理', '已取消'], datasets: [{ data: [85, 11, 4], backgroundColor: ['#10b981', '#f59e0b', '#94a3b8'] }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+    </script>
+</body>
+</html>
